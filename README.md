@@ -42,7 +42,6 @@ Here's an overview of how the data is rendered on the frontend:
 4. When the user scrolls to the bottom of the table, we automatically request new sets of squares with their respective integers. This process continues until we reach the last integer.
 
 
-#### Scope of improvement
-1. Instead of using `Promise.all()`, we could use a simple for loop. While this might increase latency slightly, it would be much easier to understand.
-2. We built a custom virtualization component instead of using an external library.
-3. We employed parallelism to calculate the squares of large amounts of data.
+#### Scope of Improvement
+1. Instead of using `Promise.all()`, we could use a simple for loop. While this might increase latency, it would be much easier to understand.
+2. We can built a custom virtualization component instead of using an external library.
