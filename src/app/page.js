@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Virtuoso, TableVirtuoso } from "react-virtuoso";
+import { TableVirtuoso } from "react-virtuoso";
 
 const PageLoader = () => {
   return (
