@@ -1,101 +1,138 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState, useRef } from "react";
+
+const PageLoader = () => {
+  return (
+    <div className="h-screen w-screen flex items-center justify-center bg-black">
+      <div className="block w-10 h-10 rounded-full animate-spin bg-black border-8 border-dashed border-gray-850"></div>
+    </div>
+  );
+};
+
+const TableLoader = () => {
+  return (
+    <div className="flex w-full  justify-center items-center py-3">
+      <div className="block w-7 h-7 self-center rounded-full animate-spin bg-gray-950 border-8 border-dashed border-white"></div>
+    </div>
+  );
+};
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [currentSqrs, setCurrentSqrs] = useState([]);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+  //use this for refactoring
+  const [status, setStatus] = useState({
+    pageLoading: "pending",
+    tableLoading: "pending",
+  });
+  const nextPageNum = useRef(1);
+  const previousPage = useRef(0); //remove this
+
+  const [hasNext, setHasNext] = useState(true);
+
+  console.log(status);
+
+  useEffect(() => {
+    // Add the scroll event listener
+    window.addEventListener("scroll", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    getCurrentIntegers();
+  }, []);
+
+  const handleScroll = () => {
+    const scrollTop = window.scrollY; // Scroll position from the top
+    const windowHeight = window.innerHeight; // Height of the viewport
+    const docHeight = document.documentElement.scrollHeight; // Total height of the document
+
+    // Calculate the scroll position percentage
+    const scrollPercent = (scrollTop + windowHeight) / docHeight;
+
+    // Check if the user has scrolled more than 80% of the page, if did fetch next batch of table data
+    if (scrollPercent >= 0.9) {
+      console.log("User has scrolled 80% of the page");
+      if (hasNext) getCurrentIntegers();
+    }
+  };
+
+  const getSqrs = (ints) => {
+    fetch(`/api/square`, {
+      method: "POST",
+      body: JSON.stringify({
+        integers: ints,
+      }),
+    }).then(async (data) => {
+      const dd = await data.json();
+      setCurrentSqrs((currentSqrs) => [...currentSqrs, ...dd.sqrs]);
+
+      //for initial page load
+      if (status.pageLoading === "pending")
+        setStatus((prevStatus) => ({
+          ...prevStatus,
+          pageLoading: "completed",
+        }));
+
+      //for table data load
+      setStatus((prevStatus) => ({ ...prevStatus, tableLoading: "completed" }));
+    });
+  };
+
+  const getCurrentIntegers = () => {
+    previousPage.current = nextPageNum.current - 1;
+    console.log("running the current int func");
+    setStatus((prevStatus) => ({ ...prevStatus, tableLoading: "pending" }));
+    fetch(`/api/integer?page=${nextPageNum.current}`)
+      .then((data) => {
+        return data.json();
+      })
+      .then((data) => {
+        setHasNext(data.nextPage);
+        nextPageNum.current = data.nextPageNum;
+        getSqrs(data.integers);
+      });
+  };
+
+  if (status.pageLoading === "pending") return <PageLoader />;
+
+  return (
+    <div className="flex items-center justify-center ">
+      <div className="overflow-x-auto w-full max-w-3xl px-3 sm:px-2 md:px-0 pb-8">
+        <table className="min-w-full divide-y-2 divide-gray-800 bg-gray-950 text-sm shadow-xl border-gray-900">
+          <thead className="">
+            <tr>
+              <th className="whitespace-nowrap px-4 py-2 font-lg text-white">
+                Integer
+              </th>
+              <th className="whitespace-nowrap px-4 py-2 font-lg text-white">
+                Square
+              </th>
+            </tr>
+          </thead>
+
+          <tbody className="divide-y divide-gray-800">
+            {currentSqrs?.map((sqr, i) => (
+              <tr className="" key={i + 1}>
+                <td className="whitespace-nowrap px-4 py-2 font-medium bg-gray-950  text-white text-center">
+                  {sqr.int}
+                </td>
+                <td className="whitespace-nowrap px-4 py-2 font-medium bg-gray-950  text-white text-center">
+                  {sqr.sqr}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {status.tableLoading === "pending" && (
+          <TableLoader/>
+        )}
+        {!hasNext&&<h1 className="text-7xl">you have reached the end</h1>}
+      </div>
     </div>
   );
 }

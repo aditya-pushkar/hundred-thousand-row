@@ -1,0 +1,6 @@
+has_next
+has_previous
+current_page
+next_page
+previous_page
+total_page = total_item/total_item_in_single_view 
