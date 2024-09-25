@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { Virtuoso, TableVirtuoso } from "react-virtuoso";
 
 const PageLoader = () => {
   return (
@@ -13,53 +14,27 @@ const PageLoader = () => {
 const TableLoader = () => {
   return (
     <div className="flex w-full  justify-center items-center py-3">
-      <div className="block w-7 h-7 self-center rounded-full animate-spin bg-gray-950 border-8 border-dashed border-white"></div>
+      <div className="block w-7 h-7 self-center rounded-full animate-spin bg-gray-950 border-8 border-dashed border-gray-300"></div>
     </div>
   );
 };
 
 export default function Home() {
   const [currentSqrs, setCurrentSqrs] = useState([]);
-
-  //use this for refactoring
   const [status, setStatus] = useState({
     pageLoading: "pending",
     tableLoading: "pending",
   });
+  const [fetchNewInt, setFetchNewInt] = useState(true)
   const nextPageNum = useRef(1);
-  const previousPage = useRef(0); //remove this
 
   const [hasNext, setHasNext] = useState(true);
 
-  console.log(status);
-
   useEffect(() => {
-    // Add the scroll event listener
-    window.addEventListener("scroll", handleScroll);
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
-
-  useEffect(() => {
+    if(fetchNewInt){
     getCurrentIntegers();
-  }, []);
-
-  const handleScroll = () => {
-    const scrollTop = window.scrollY; // Scroll position from the top
-    const windowHeight = window.innerHeight; // Height of the viewport
-    const docHeight = document.documentElement.scrollHeight; // Total height of the document
-
-    // Calculate the scroll position percentage
-    const scrollPercent = (scrollTop + windowHeight) / docHeight;
-
-    // Check if the user has scrolled more than 80% of the page, if did fetch next batch of table data
-    if (scrollPercent >= 0.9) {
-      console.log("User has scrolled 80% of the page");
-      if (hasNext) getCurrentIntegers();
     }
-  };
+  }, [fetchNewInt]);
 
   const getSqrs = (ints) => {
     fetch(`/api/square`, {
@@ -84,8 +59,6 @@ export default function Home() {
   };
 
   const getCurrentIntegers = () => {
-    previousPage.current = nextPageNum.current - 1;
-    console.log("running the current int func");
     setStatus((prevStatus) => ({ ...prevStatus, tableLoading: "pending" }));
     fetch(`/api/integer?page=${nextPageNum.current}`)
       .then((data) => {
@@ -101,38 +74,33 @@ export default function Home() {
   if (status.pageLoading === "pending") return <PageLoader />;
 
   return (
-    <div className="flex items-center justify-center ">
-      <div className="overflow-x-auto w-full max-w-3xl px-3 sm:px-2 md:px-0 pb-8">
-        <table className="min-w-full divide-y-2 divide-gray-800 bg-gray-950 text-sm shadow-xl border-gray-900">
-          <thead className="">
-            <tr>
-              <th className="whitespace-nowrap px-4 py-2 font-lg text-white">
-                Integer
-              </th>
-              <th className="whitespace-nowrap px-4 py-2 font-lg text-white">
-                Square
-              </th>
-            </tr>
-          </thead>
-
-          <tbody className="divide-y divide-gray-800">
-            {currentSqrs?.map((sqr, i) => (
-              <tr className="" key={i + 1}>
-                <td className="whitespace-nowrap px-4 py-2 font-medium bg-gray-950  text-white text-center">
-                  {sqr.int}
-                </td>
-                <td className="whitespace-nowrap px-4 py-2 font-medium bg-gray-950  text-white text-center">
-                  {sqr.sqr}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {status.tableLoading === "pending" && (
-          <TableLoader/>
+    <main className="flex flex-col items-center justify-center min-h-screen  p-4">
+    <div className="w-full max-w-3xl bg-gray-950 shadow-lg rounded-lg overflow-hidden">
+      <TableVirtuoso
+        className="w-full"
+        data={currentSqrs}
+        useWindowScroll
+        endReached={(e) => setFetchNewInt(e)}
+        fixedHeaderContent={() => (
+          <tr className="bg-gray-900 px-24">
+            <th className="text-left py-3 px-6 font-semibold text-white-200 w-full">Integer</th>
+            <th className="text-left py-3 px-6 font-semibold text-white-200 w-full">Square</th>
+          </tr>
         )}
-        {!hasNext&&<h1 className="text-7xl">you have reached the end</h1>}
-      </div>
+        itemContent={(index, square) => (
+          <>
+            <td className="py-2 px-6 border-b border-gray-800">{square.int}</td>
+            <td className="py-2 px-6 border-b border-gray-800">{square.sqr}</td>
+          </>
+        )}
+      />
     </div>
+    {status.tableLoading === "pending" && (
+      <div className="mt-4">
+        <TableLoader />
+      </div>
+    )}
+  </main>
+
   );
 }

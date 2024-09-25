@@ -10,7 +10,7 @@ export async function POST(request) {
 
    // Delaying the execution by 2 seconds using setTimeout
    await new Promise((resolve) => {
-    setTimeout(resolve, 5000);
+    setTimeout(resolve, 2000);
   });
 
   return Response.json({ sqrs: sqr });
