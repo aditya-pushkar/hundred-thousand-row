@@ -25,14 +25,13 @@ export default function Home() {
     pageLoading: "pending",
     tableLoading: "pending",
   });
-  const [fetchNewInt, setFetchNewInt] = useState(true)
+  const [fetchNewInt, setFetchNewInt] = useState(true);
   const nextPageNum = useRef(1);
-
-  const [hasNext, setHasNext] = useState(true);
+  const hasNext = useRef(true);
 
   useEffect(() => {
-    if(fetchNewInt){
-    getCurrentIntegers();
+    if (fetchNewInt) {
+      getCurrentIntegers();
     }
   }, [fetchNewInt]);
 
@@ -59,13 +58,16 @@ export default function Home() {
   };
 
   const getCurrentIntegers = () => {
+    //terminate the func, if there is no next page
+    if (!hasNext.current) return 0;
+
     setStatus((prevStatus) => ({ ...prevStatus, tableLoading: "pending" }));
     fetch(`/api/integer?page=${nextPageNum.current}`)
       .then((data) => {
         return data.json();
       })
       .then((data) => {
-        setHasNext(data.nextPage);
+        hasNext.current = data.nextPage;
         nextPageNum.current = data.nextPageNum;
         getSqrs(data.integers);
       });
@@ -75,32 +77,39 @@ export default function Home() {
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen  p-4">
-    <div className="w-full max-w-3xl bg-gray-950 shadow-lg rounded-lg overflow-hidden">
-      <TableVirtuoso
-        className="w-full"
-        data={currentSqrs}
-        useWindowScroll
-        endReached={(e) => setFetchNewInt(e)}
-        fixedHeaderContent={() => (
-          <tr className="bg-gray-900 px-24">
-            <th className="text-left py-3 px-6 font-semibold text-white-200 w-full">Integer</th>
-            <th className="text-left py-3 px-6 font-semibold text-white-200 w-full">Square</th>
-          </tr>
-        )}
-        itemContent={(index, square) => (
-          <>
-            <td className="py-2 px-6 border-b border-gray-800">{square.int}</td>
-            <td className="py-2 px-6 border-b border-gray-800">{square.sqr}</td>
-          </>
-        )}
-      />
-    </div>
-    {status.tableLoading === "pending" && (
-      <div className="mt-4">
-        <TableLoader />
+      <div className="w-full max-w-3xl bg-gray-950 shadow-lg rounded-lg overflow-hidden">
+        <TableVirtuoso
+          className="w-full"
+          data={currentSqrs}
+          useWindowScroll
+          endReached={(e) => setFetchNewInt(e)}
+          fixedHeaderContent={() => (
+            <tr className="bg-gray-900 px-24">
+              <th className="text-left py-3 px-6 font-semibold text-white-200 w-full">
+                Integer
+              </th>
+              <th className="text-left py-3 px-6 font-semibold text-white-200 w-full">
+                Square
+              </th>
+            </tr>
+          )}
+          itemContent={(index, square) => (
+            <>
+              <td className="py-2 px-6 border-b border-gray-800">
+                {square.int}
+              </td>
+              <td className="py-2 px-6 border-b border-gray-800">
+                {square.sqr}
+              </td>
+            </>
+          )}
+        />
       </div>
-    )}
-  </main>
-
+      {status.tableLoading === "pending" && (
+        <div className="mt-4">
+          <TableLoader />
+        </div>
+      )}
+    </main>
   );
 }

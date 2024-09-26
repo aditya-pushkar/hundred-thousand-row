@@ -1,24 +1,19 @@
 export async function POST(request) {
   const res = await request.json();
+
+  // Array of integers 
   const { integers } = res;
 
   
-  // Loop through all the integer and return with tere square
+  // Loop through all the integers and return an array with integers and their square.
   const sqr = await Promise.all(integers.map((n)=>{
     return {int:n, sqr:n**2}
   }));
 
-   // Delaying the execution by 2 seconds using setTimeout
+   // Delaying the execution by 2 seconds
    await new Promise((resolve) => {
     setTimeout(resolve, 2000);
   });
 
   return Response.json({ sqrs: sqr });
 }
-
-/**
- * OPTIMIZE FOR BATCHING
- * 1-100000 in array or somethign
- * we have to track current integer, previous ? in case of 1-1000 no after that yes, have_next ? in 99000-100000 no
- *
- */
