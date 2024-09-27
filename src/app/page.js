@@ -5,7 +5,7 @@ import { TableVirtuoso } from "react-virtuoso";
 
 
 const TOTAL_INTEGERS = 100_000
-const BATCH_SIZE = 1000; // How many rows to fetch per API call
+const BATCH_SIZE = 500; // How many rows to fetch per API call
 
 export default function Home() {
   const [sqrs, setSqrs] = useState([]); 
