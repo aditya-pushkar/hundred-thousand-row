@@ -1,77 +1,59 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState} from "react";
 import { TableVirtuoso } from "react-virtuoso";
 
-const PageLoader = () => {
-  return (
-    <div className="h-screen w-screen flex items-center justify-center bg-black">
-      <div className="block w-10 h-10 rounded-full animate-spin bg-black border-8 border-dashed border-gray-850"></div>
-    </div>
-  );
-};
 
-const TableLoader = () => {
-  return (
-    <div className="flex w-full  justify-center items-center py-3">
-      <div className="block w-7 h-7 self-center rounded-full animate-spin bg-gray-950 border-8 border-dashed border-gray-300"></div>
-    </div>
-  );
-};
+const TOTAL_INTEGERS = 100_000
+const BATCH_SIZE = 1000; // How many rows to fetch per API call
 
 export default function Home() {
-  const [currentSqrs, setCurrentSqrs] = useState([]);
+  const [sqrs, setSqrs] = useState([]); 
   const [status, setStatus] = useState({
     pageLoading: "pending",
     tableLoading: "pending",
   });
-  const [fetchNewInt, setFetchNewInt] = useState(true);
-  const nextPageNum = useRef(1);
-  const hasNext = useRef(true);
 
-  useEffect(() => {
-    if (fetchNewInt) {
-      getCurrentIntegers();
-    }
-  }, [fetchNewInt]);
+  useEffect(()=>{
+    /**
+     * LoadMore function only run's if user scrolled the end  of the table,
+     * but there is no table in initial load, so no data to scroll,
+     * in order to tackel that we wil run swr func with startIndex = 0 
+     */
+    getSqrs(0)
+  },[])
 
-  const getSqrs = (ints) => {
+
+  const getSqrs = (startIndex) => {
+    setStatus((prevStatus) => ({ ...prevStatus, tableLoading: "pending" }));
+
+    const ints = Array.from({length: BATCH_SIZE}, (_, intIndex)=> intIndex + startIndex)
     fetch(`/api/square`, {
       method: "POST",
       body: JSON.stringify({
         integers: ints,
       }),
     }).then(async (data) => {
-      const dd = await data.json();
-      setCurrentSqrs((currentSqrs) => [...currentSqrs, ...dd.sqrs]);
+      const intt = await data.json();
 
-      //for initial page load
+      setSqrs((currentSqrs) => [...currentSqrs, ...intt.sqrs]);
+      setStatus((prevStatus) => ({ ...prevStatus, tableLoading: "completed" }));
+      //only for initial page load
       if (status.pageLoading === "pending")
         setStatus((prevStatus) => ({
           ...prevStatus,
           pageLoading: "completed",
         }));
 
-      //for table data load
-      setStatus((prevStatus) => ({ ...prevStatus, tableLoading: "completed" }));
     });
+
   };
 
-  const getCurrentIntegers = () => {
-    //terminate the func, if there is no next page
-    if (!hasNext.current) return 0;
+  const loadMore = (startIndex) => {
+    if(sqrs.length>=TOTAL_INTEGERS) console.log("ENDED")
+    getSqrs(startIndex);
+  }
 
-    setStatus((prevStatus) => ({ ...prevStatus, tableLoading: "pending" }));
-    fetch(`/api/integer?page=${nextPageNum.current}`)
-      .then((data) => {
-        return data.json();
-      })
-      .then((data) => {
-        hasNext.current = data.nextPage;
-        nextPageNum.current = data.nextPageNum;
-        getSqrs(data.integers);
-      });
-  };
 
   if (status.pageLoading === "pending") return <PageLoader />;
 
@@ -80,9 +62,11 @@ export default function Home() {
       <div className="w-full max-w-3xl bg-gray-950 shadow-lg rounded-lg overflow-hidden">
         <TableVirtuoso
           className="w-full"
-          data={currentSqrs}
+          data={sqrs}
           useWindowScroll
-          endReached={(e) => setFetchNewInt(e)}
+          endReached={(e) => {
+            loadMore(e)
+          }}
           fixedHeaderContent={() => (
             <tr className="bg-gray-900 px-24">
               <th className="text-left py-3 px-6 font-semibold text-white-200 w-full">
@@ -113,3 +97,20 @@ export default function Home() {
     </main>
   );
 }
+
+
+const PageLoader = () => {
+  return (
+    <div className="h-screen w-screen flex items-center justify-center bg-black">
+      <div className="block w-10 h-10 rounded-full animate-spin bg-black border-8 border-dashed border-gray-850"></div>
+    </div>
+  );
+};
+
+const TableLoader = () => {
+  return (
+    <div className="flex w-full  justify-center items-center py-3">
+      <div className="block w-7 h-7 self-center rounded-full animate-spin bg-gray-950 border-8 border-dashed border-gray-300"></div>
+    </div>
+  );
+};

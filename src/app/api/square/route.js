@@ -1,7 +1,6 @@
 export async function POST(request) {
   const res = await request.json();
 
-  // Array of integers 
   const { integers } = res;
 
   
@@ -10,7 +9,7 @@ export async function POST(request) {
     return {int:n, sqr:n**2}
   }));
 
-   // Delaying the execution by 2 seconds
+   // Delaying the execution by 2 seconds using setTimeout
    await new Promise((resolve) => {
     setTimeout(resolve, 2000);
   });
